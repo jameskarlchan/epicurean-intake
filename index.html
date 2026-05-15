@@ -63,7 +63,7 @@ body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-h
 .qcat:hover{border-color:var(--gold);color:var(--white);}
 .qcat.on{border-color:var(--gold);background:var(--gold);color:var(--ink);font-weight:600;}
 /* Credit option tabs */
-.credit-opts{display:flex;gap:0;margin-bottom:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+.credit-opts{display:flex;gap:0;margin-bottom:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
 .credit-opt{flex:1;padding:8px 12px;font-size:.78rem;font-weight:500;cursor:pointer;text-align:center;background:var(--white);color:var(--ink-soft);border:none;transition:all .15s;font-family:var(--font-body);}
 .credit-opt:hover{background:var(--gold-pale);color:var(--ink);}
 .credit-opt.on{background:var(--gold);color:var(--ink);font-weight:600;}
@@ -610,32 +610,40 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
     const insertAt = lastDataRow + 1 + idx;
     const nomNo = lastNomNo + 1 + idx;
     sheet.insertRowBefore(insertAt);
-    sheet.getRange(insertAt, 1, 1, 24).setValues([[
-      nomNo,
-      (row.brand||'').toUpperCase(),
-      (row.category||'').toUpperCase(),
-      row.seatsAllocated !== undefined ? row.seatsAllocated : 1,
-      row.seats||'No',
-      '',
-      row.contact||'',
-      row.designation||'',
-      row.email||'',
-      row.phone||'',
-      row.member||'',
-      '',
-      '',
-      row.seats||'0',
-      '',
-      '',
-      row.billingName||'',
-      row.billingAddress||'',
-      row.dc6||'',
-      '',
-      '',
-      '',
-      '',
-      ''
+
+    // Write columns A–L (1–12) — skip M (13) which has formula
+    sheet.getRange(insertAt, 1, 1, 12).setValues([[
+      nomNo,                                    // A: No.
+      (row.brand||'').toUpperCase(),            // B: Company/Brand
+      (row.category||'').toUpperCase(),         // C: Award Category
+      row.seatsAllocated === 1 ? 1 : '',        // D: No. of seats allocated
+      row.seats||'No',                          // E: Purchase additional seats
+      '',                                       // F: RSVP?
+      row.contact||'',                          // G: Contact Person
+      row.designation||'',                      // H: Designation
+      row.email||'',                            // I: Email
+      row.phone||'',                            // J: Contact Number
+      row.member||'',                           // K: RAS Member / Non-Member
+      ''                                        // L: Hidden
     ]]);
+
+    // Skip M (13) — Nomination Amount formula
+    // Write column N (14) only
+    sheet.getRange(insertAt, 14, 1, 1).setValues([[
+      row.seats||'0'                            // N: Additional Seats/Table Amount
+    ]]);
+
+    // Skip O (15) GST formula, P (16) Total formula
+    // Write columns Q–S (17–19)
+    sheet.getRange(insertAt, 17, 1, 3).setValues([[
+      row.billingName||'',                      // Q: Billing Name
+      row.billingAddress||'',                   // R: Billing Address
+      row.dc6||''                               // S: Dining Credit 6 pax
+    ]]);
+
+    // Skip T (20) — Dining Credit 2 pax formula
+    // Skip U (21) — hidden
+    // Leave V–X (22–24) blank — Logo, DC Sent, DC Received
   });
 }
 
@@ -1197,7 +1205,7 @@ function buildCard(cat){
     // Fine dining: no Option A/B toggle — just set menu input
     body=`<div class="fine-note">Dining credit = cost of standard set menu for 2 guests, up to S$500 per person.</div>
       <div class="field" style="max-width:220px;margin-top:4px;"><label>Set Menu Per Person (S$)</label>
-      <input type="number" id="fine_${s}" placeholder="e.g. 280" oninput="calcFine('${escQ(cat)}')" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px;font-size:.95rem;font-family:var(--font-body);width:100%;"/></div>
+      <input type="number" id="fine_${s}" placeholder="e.g. 280" oninput="calcFine('${escQ(cat)}')" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:.95rem;font-family:var(--font-body);width:100%;"/></div>
       <div class="calc-mini" id="fc_${s}" style="display:none;">
         <div class="cr"><span class="cn">Per person (cap S$500)</span><span class="cv" id="fpp_${s}">—</span></div>
         <div class="cr ctot"><span class="cn">Per judge pair (2 pax)</span><span class="cv" id="fp2_${s}">—</span></div>
@@ -1289,7 +1297,16 @@ function calcCustom(cat){
 
 function calcSpend(cat,val,el){
   const s=sid(cat);
+  const isAlreadySelected=el.classList.contains('on');
   document.querySelectorAll(`#sp_${s} .sp`).forEach(p=>{p.classList.remove('on');p.querySelector('.sd').style.cssText='';});
+  if(isAlreadySelected){
+    // Unclick — clear credit data
+    delete creditData[cat];
+    se('bdg_'+s,'Select spend →');
+    const cl=document.getElementById('cl_'+s);
+    if(cl)cl.style.display='none';
+    return;
+  }
   el.classList.add('on');el.querySelector('.sd').style.background='var(--gold)';el.querySelector('.sd').style.borderColor='var(--gold)';
   const base=val*2,tax=base*1.19,rounded=Math.ceil(tax/10)*10,total=rounded*3;
   se('cb_'+s,'S$'+base);se('ct_'+s,'S$'+tax.toFixed(2));se('c2_'+s,'S$'+rounded);se('c6_'+s,'S$'+total);
@@ -1368,8 +1385,7 @@ function writeToSheet(){
   });
 
   rows.forEach((row, idx) => {
-    // Column D: 1 seat for the first category row only, 0 for subsequent rows of same concept
-    row.seatsAllocated = idx === 0 ? 1 : '';
+    row.seatsAllocated = idx === 0 ? 1 : null;
   });
   if(hasPCA){
     rows.push({
@@ -1750,7 +1766,7 @@ function op(html,title){
     +'<img src="'+EPI+'" style="height:90px;width:auto;display:block;" alt="RAS Epicurean Star Award 2026"/>'
     +'</td>'
     +'<td style="border:none;padding:0;vertical-align:middle;width:50%;text-align:right;">'
-    +'<img src="'+RAS+'" style="height:90px;width:auto;display:block;margin-left:auto;" alt="Restaurant Association of Singapore"/>'
+    +'<img src="'+RAS+'" style="height:90px;width:auto;display:block;margin-left:auto;mix-blend-mode:multiply;" alt="Restaurant Association of Singapore"/>'
     +'</td></tr></table>';
   const footer='<div style="text-align:center;font-size:9pt;color:#888;border-top:1px solid #ddd;padding-top:10px;margin-top:28px;">331 North Bridge Road, #22-01/06 Odeon Towers, Singapore 188720 &nbsp;|&nbsp; Website: www.ras.org.sg &nbsp;|&nbsp; #onevoiceforfnb</div>';
 
@@ -1780,13 +1796,13 @@ function op(html,title){
     +'<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet"/>'
     +'<style>'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:"Outfit",sans-serif;font-size:11.5pt;line-height:1.9;color:#1C1A17;background:#fff;}'
-    +'.lpage{padding:44px 56px 32px;max-width:794px;margin:0 auto;}'
+    +'body{font-family:"Outfit",sans-serif;font-size:10.5pt;line-height:1.75;color:#1C1A17;background:#fff;}'
+    +'.lpage{padding:36px 52px 28px;max-width:794px;margin:0 auto;}'
     +'.lpage+.lpage{page-break-before:always;}'
     +'p{margin-bottom:14px;}'
     +'ul{margin:0 0 14px 22px;}'
     +'ul li{margin-bottom:6px;line-height:1.75;}'
-    +'table{width:100%;border-collapse:collapse;margin:12px 0;}'
+    +'table{width:100%;border-collapse:collapse;margin:10px 0;}'
     +'th,td{border:1px solid #ccc;padding:10px 13px;text-align:left;vertical-align:top;font-size:10.5pt;}'
     +'th{background:#f5f0e8;font-weight:600;width:210px;}'
     +'tr[style*=\"border:none\"] th,tr[style*=\"border:none\"] td{border:none!important;padding:3px 8px 3px 0!important;}'
