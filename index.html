@@ -306,7 +306,7 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
           </div>
         </div>
         <div style="margin-bottom:16px;">
-          <p style="font-size:.8rem;color:var(--ink-faint);margin-bottom:8px;">People's Choice Award</p>
+          <p style="font-size:.8rem;color:var(--ink-faint);margin-bottom:8px;">The People's Choice Award</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="qbtn" id="qPCAYes" onclick="qSetPCA('Yes')">Yes (+S$100)</button>
             <button class="qbtn" id="qPCANo" onclick="qSetPCA('No')">No</button>
@@ -409,7 +409,7 @@ hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
           </div>
         </div>
         <div class="field">
-          <label>People's Choice Award</label>
+          <label>The People's Choice Award</label>
           <div class="rpg" id="pcaGroup">
             <label class="rp" onclick="selR(this,'pcaGroup')"><input type="radio" name="pca" value="Yes"/><span class="rdot"></span>Yes (+S$100)</label>
             <label class="rp" onclick="selR(this,'pcaGroup')"><input type="radio" name="pca" value="No"/><span class="rdot"></span>No</label>
@@ -1406,7 +1406,7 @@ function writeToSheet(){
   if(hasPCA){
     rows.push({
       brand:brand.toUpperCase(),
-      category:"PEOPLE'S CHOICE AWARD",
+      category:"THE PEOPLE'S CHOICE AWARD",
       contact:contactCombined,
       designation:desig,
       email:emailCombined,
