@@ -897,36 +897,9 @@ function parseText(){
   // Skip any remaining address lines
   while(vi<vals.length&&isAddress(peek()))skip();
 
-  // [13] Brand / concept name
-  // Primary: scan raw lines for inline label "Name of Brand/Concept: VALUE"
-  if(!d.brandName){
-    for(let i=0;i<lines.length;i++){
-      const l=lines[i];
-      const m=l.match(/^name of brand\s*\/?\s*concept\s*:?\s*(.+)$/i);
-      if(m&&m[1]&&m[1].trim().length>1){
-        d.brandName=m[1].trim();
-        break;
-      }
-    }
-  }
-  // Secondary: scan for label on its own line, value on next line
-  if(!d.brandName){
-    const brandLabelIdx=lines.findIndex(l=>/^(name of brand|brand\s*\/?\s*concept name|concept\s*\/?\s*brand name|brand name|concept name)\s*:?\s*$/i.test(l.trim()));
-    if(brandLabelIdx>=0){
-      for(let i=brandLabelIdx+1;i<Math.min(brandLabelIdx+5,lines.length);i++){
-        const candidate=lines[i].trim();
-        if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&!isUEN(candidate)&&!isAddress(candidate)&&!SKIP.test(candidate)&&!STOP.test(candidate)&&candidate.length>1){
-          d.brandName=candidate;
-          break;
-        }
-      }
-    }
-  }
-  // Fallback: positional — next non-numeric, non-address line in vals
-  if(!d.brandName){
-    while(vi<vals.length&&(isNum(peek())||isAddress(peek())))skip();
-    if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek()))d.brandName=take();
-  }
+  // [13] Brand / concept name — next non-numeric, non-address line
+  while(vi<vals.length&&(isNum(peek())||isAddress(peek())))skip();
+  if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek()))d.brandName=take();
 
   // [14-15] Years in operation + Number of outlets
   // These appear on page 5 AFTER the category list — too far for positional parsing.
