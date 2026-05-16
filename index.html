@@ -824,7 +824,7 @@ function parseText(){
 
   // STEP 2: Collect only the value lines — stop before Section 4 content
   const STOP=/^(ℹ️|this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
-  const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|name of brand|☐|for office use|submission|reference number|payment received|processed by)/i;
+  const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen[ :]|unique entity|billing company|billing address|billing contact|your concept|name of brand|☐|for office use|submission|reference number|payment received|processed by)/i;
   const EMOJI=/^[\s📝💰🏢💳🍽️📅📋✅💡📨📸✍️⚖️📞💬🎉🎟️🖼️ℹ️⏰☐✨⭐🌟\-–—]+$/;
 
   const vals=[];
@@ -900,14 +900,19 @@ function parseText(){
   while(vi<vals.length&&isAddress(peek()))skip();
 
   // [13] Brand / concept name
-  // Brand name is always the last value before the STOP marker ("This name will be used").
-  // Read it directly from the end of vals — immune to positional drift from optional fields.
-  if(vals.length > 0){
-    const last = vals[vals.length - 1];
-    console.log("LAST CHECK:", last, "isAddr:", isAddress(last));
-    if(last && !isEmail(last) && !isPhone(last) && !isUEN(last) && !isNum(last)){
-      d.brandName = last;
-      console.log("BRANDNAME SET:", d.brandName);
+  // Scan backwards from end of vals, skipping trailing UEN/reference lines.
+  // Brand name is always the last meaningful value before the STOP marker.
+  for(let i=vals.length-1;i>=0;i--){
+    const candidate=vals[i];
+    if(candidate&&
+       !isEmail(candidate)&&
+       !isPhone(candidate)&&
+       !isUEN(candidate)&&
+       !isNum(candidate)&&
+       !/^uen[\s:]/i.test(candidate)&&
+       !isAddress(candidate)){
+      d.brandName=candidate;
+      break;
     }
   }
 
