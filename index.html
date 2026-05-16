@@ -824,7 +824,7 @@ function parseText(){
 
   // STEP 2: Collect only the value lines — stop before Section 4 content
   const STOP=/^(ℹ️|this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
-  const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|name of brand|☐|for office use|submission|reference number|payment received|processed by)/i;
+  const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|☐|for office use|submission|reference number|payment received|processed by)/i;
   const EMOJI=/^[\s📝💰🏢💳🍽️📅📋✅💡📨📸✍️⚖️📞💬🎉🎟️🖼️ℹ️⏰☐✨⭐🌟\-–—]+$/;
 
   const vals=[];
@@ -898,14 +898,27 @@ function parseText(){
   while(vi<vals.length&&isAddress(peek()))skip();
 
   // [13] Brand / concept name
-  // Primary: scan raw lines for the label then grab the next non-empty value line
-  const brandLabelIdx=lines.findIndex(l=>/^(name of brand|brand\s*\/?\s*concept name|concept\s*\/?\s*brand name|brand name|concept name)/i.test(l.trim()));
-  if(brandLabelIdx>=0){
-    for(let i=brandLabelIdx+1;i<Math.min(brandLabelIdx+5,lines.length);i++){
-      const candidate=lines[i].trim();
-      if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&!isUEN(candidate)&&!isAddress(candidate)&&!SKIP.test(candidate)&&!STOP.test(candidate)&&candidate.length>1){
-        d.brandName=candidate;
+  // Primary: scan raw lines for inline label "Name of Brand/Concept: VALUE"
+  if(!d.brandName){
+    for(let i=0;i<lines.length;i++){
+      const l=lines[i];
+      const m=l.match(/^name of brand\s*\/?\s*concept\s*:?\s*(.+)$/i);
+      if(m&&m[1]&&m[1].trim().length>1){
+        d.brandName=m[1].trim();
         break;
+      }
+    }
+  }
+  // Secondary: scan for label on its own line, value on next line
+  if(!d.brandName){
+    const brandLabelIdx=lines.findIndex(l=>/^(name of brand|brand\s*\/?\s*concept name|concept\s*\/?\s*brand name|brand name|concept name)\s*:?\s*$/i.test(l.trim()));
+    if(brandLabelIdx>=0){
+      for(let i=brandLabelIdx+1;i<Math.min(brandLabelIdx+5,lines.length);i++){
+        const candidate=lines[i].trim();
+        if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&!isUEN(candidate)&&!isAddress(candidate)&&!SKIP.test(candidate)&&!STOP.test(candidate)&&candidate.length>1){
+          d.brandName=candidate;
+          break;
+        }
       }
     }
   }
