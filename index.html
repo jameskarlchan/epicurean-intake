@@ -897,9 +897,15 @@ function parseText(){
   // Skip any remaining address lines
   while(vi<vals.length&&isAddress(peek()))skip();
 
-  // [13] Brand / concept name — next non-numeric, non-address line
-  while(vi<vals.length&&(isNum(peek())||isAddress(peek())))skip();
-  if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek()))d.brandName=take();
+  // [13] Brand / concept name
+  // Brand name is always the last value before the STOP marker ("This name will be used").
+  // Read it directly from the end of vals — immune to positional drift from optional fields.
+  if(vals.length > 0){
+    const last = vals[vals.length - 1];
+    if(last && !isEmail(last) && !isPhone(last) && !isUEN(last) && !isAddress(last) && !isNum(last)){
+      d.brandName = last;
+    }
+  }
 
   // [14-15] Years in operation + Number of outlets
   // These appear on page 5 AFTER the category list — too far for positional parsing.
@@ -1343,7 +1349,7 @@ function getTablePricing(){
 // ══════════════════════════════════════════════════════════
 // GOOGLE SHEETS CONFIG — paste your Apps Script Web App URL here
 // ══════════════════════════════════════════════════════════
-const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzGvLm-AGCcBFirPBWcmpf_M96-VGJoLF1XurCk51ZidXLroO5_OI9LfHn0tfYLOdSC/exec';
+const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyVzAUKLf9SxyDU0rL-RUEKQPQROx1yw_gUwgPVwjouPkqmygTclJDPgl-QA8Gnvy7IlA/exec';
 
 function generateAll(){
   if(!gv('brandName')){showToast('Please enter a Brand Name.');return;}
@@ -1409,7 +1415,7 @@ function writeToSheet(){
   // Script tag injection — the only method that reliably bypasses CORS for Apps Script
   const callbackName='gsCallback_'+Date.now();
   const payload=encodeURIComponent(JSON.stringify({rows}));
-  const url=SHEET_ENDPOINT+'?data='+payload+'&callback='+callbackName;
+  const url=SHEET_ENDPOINT+'?payload='+payload+'&callback='+callbackName;
 
   window[callbackName]=function(response){
     delete window[callbackName];
