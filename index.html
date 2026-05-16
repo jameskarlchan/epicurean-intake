@@ -906,6 +906,7 @@ function parseText(){
     const last = vals[vals.length - 1];
     if(last && !isEmail(last) && !isPhone(last) && !isUEN(last) && !isAddress(last) && !isNum(last)){
       d.brandName = last;
+      console.log("BRANDNAME SET:", d.brandName);
     }
   }
 
