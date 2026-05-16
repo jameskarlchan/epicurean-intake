@@ -1384,19 +1384,23 @@ function writeToSheet(){
 
   const rows=selCats.map(cat=>{
     const dc=creditData[cat]||{};
-    return {
-      brand:brand.toUpperCase(),
-      category:cat.toUpperCase(),
-      contact:contactCombined,
-      designation:desig,
-      email:emailCombined,
-      phone:cPhone,
-      member:memberVal,
-      seats:gv('seatsSelection')||'',
-      billingName:gv('billingName'),
-      billingAddress:gv('billingAddress'),
-      dc6:dc.per6||'',
-      dc2:dc.per2||''
+   return {
+  brand:brand.toUpperCase(),
+  category:cat.toUpperCase(),
+  contact:contactCombined,
+  designation:desig,
+  email:emailCombined,
+  phone:cPhone,
+  member:memberVal,
+  seats:gv('seatsSelection')||'',
+  billingName:gv('billingName'),
+  billingAddress:gv('billingAddress'),
+  dc6:dc.per6||'',
+  dc2:dc.per2||'',
+  financeContact:gv('financeContact')||'',
+  financeDesig:gv('financeDesig')||'',
+  financePhone:gv('financePhone')||''
+};
     };
   });
 
