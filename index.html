@@ -836,8 +836,6 @@ function parseText(){
     if(l.length<=1)continue;
     vals.push(l);
   }
-  console.log("VALS:",JSON.stringify(vals));
-  console.log("LAST VAL:",vals[vals.length-1]);
 
   // STEP 3: Type helpers
   const fmtPhone=s=>{const n=s.replace(/\D/g,'');return n.length===8?n.slice(0,4)+' '+n.slice(4):s;};
