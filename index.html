@@ -900,29 +900,35 @@ function parseText(){
   while(vi<vals.length&&isAddress(peek()))skip();
 
   // [13] Brand / concept name
-  // Primary: first non-email/phone/UEN value after the last address line in vals.
-  // Brand name always appears immediately after the billing address in the data block.
-  let lastAddrIdx=-1;
-  for(let i=0;i<vals.length;i++){if(isAddress(vals[i]))lastAddrIdx=i;}
-  if(lastAddrIdx>=0){
-    for(let i=lastAddrIdx+1;i<vals.length;i++){
-      const candidate=vals[i];
-      if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&
-         !isUEN(candidate)&&!isNum(candidate)&&
-         !/^uen[\s:]/i.test(candidate)){
-        d.brandName=candidate;
-        break;
-      }
-    }
+  // Scan raw lines backwards from "This name will be used" marker.
+  // Skip: phones, UENs, emails, numbers, designations, lines followed by a phone number.
+  const isDesig=s=>/^(ceo|coo|cfo|gm|director|manager|executive|secretary|president|partner|owner|founder|chairman|head |deputy|assistant|senior|junior|accounts|finance|marketing|operations|hr |admin|general manager|managing|marcom|brand|commercial|procurement)/i.test(s.trim());
+  const infoMarkerIdx=lines.findIndex(l=>/this name will be used/i.test(l));
+  const scanEnd=infoMarkerIdx>0?infoMarkerIdx:lines.length;
+  for(let i=scanEnd-1;i>=Math.max(0,scanEnd-10);i--){
+    const candidate=lines[i].trim();
+    if(!candidate||candidate.length<=1)continue;
+    if(isPhone(candidate)||isUEN(candidate)||isNum(candidate))continue;
+    if(/nomination form/i.test(candidate))continue;
+    if(/^(ℹ️|☐|✅|📝)/i.test(candidate))continue;
+    if(/^uen[\s:]/i.test(candidate))continue;
+    if(isEmail(candidate))continue;
+    if(isDesig(candidate))continue;
+    if(i+1<lines.length&&isPhone(lines[i+1].trim()))continue;
+    d.brandName=candidate;
+    break;
   }
-  // Fallback: backwards scan through vals
+  // Fallback: post-billing-address scan through vals
   if(!d.brandName){
-    for(let i=vals.length-1;i>=0;i--){
-      const candidate=vals[i];
-      if(candidate&&!isPhone(candidate)&&!isEmail(candidate)&&
-         !isUEN(candidate)&&!isNum(candidate)&&!isAddress(candidate)){
-        d.brandName=candidate;
-        break;
+    let lastAddrIdx=-1;
+    for(let i=0;i<vals.length;i++){if(isAddress(vals[i]))lastAddrIdx=i;}
+    if(lastAddrIdx>=0){
+      for(let i=lastAddrIdx+1;i<vals.length;i++){
+        const candidate=vals[i];
+        if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&
+           !isUEN(candidate)&&!isNum(candidate)&&!isDesig(candidate)){
+          d.brandName=candidate;break;
+        }
       }
     }
   }
