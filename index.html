@@ -900,27 +900,37 @@ function parseText(){
   while(vi<vals.length&&isAddress(peek()))skip();
 
   // [13] Brand / concept name
-  // Scan backwards from end of vals, skipping trailing UEN/reference lines.
-  // Brand name is always the last meaningful value before the STOP marker.
-  for(let i=vals.length-1;i>=0;i--){
-    const candidate=vals[i];
-    if(candidate&&
-       !isEmail(candidate)&&
-       !isPhone(candidate)&&
-       !isUEN(candidate)&&
-       !isNum(candidate)&&
-       !/^uen[\s:]/i.test(candidate)&&
-       !isAddress(candidate)){
-      d.brandName=candidate;
-      break;
+  // Primary: first non-email/phone/UEN value after the last address line in vals.
+  // Brand name always appears immediately after the billing address in the data block.
+  let lastAddrIdx=-1;
+  for(let i=0;i<vals.length;i++){if(isAddress(vals[i]))lastAddrIdx=i;}
+  if(lastAddrIdx>=0){
+    for(let i=lastAddrIdx+1;i<vals.length;i++){
+      const candidate=vals[i];
+      if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&
+         !isUEN(candidate)&&!isNum(candidate)&&
+         !/^uen[\s:]/i.test(candidate)){
+        d.brandName=candidate;
+        break;
+      }
+    }
+  }
+  // Fallback: backwards scan through vals
+  if(!d.brandName){
+    for(let i=vals.length-1;i>=0;i--){
+      const candidate=vals[i];
+      if(candidate&&!isPhone(candidate)&&!isEmail(candidate)&&
+         !isUEN(candidate)&&!isNum(candidate)&&!isAddress(candidate)){
+        d.brandName=candidate;
+        break;
+      }
     }
   }
 
   // [14-15] Years in operation + Number of outlets
   const brandLineIdx=lines.findIndex(l=>d.brandName&&l.trim().toLowerCase()===d.brandName.trim().toLowerCase());
   const scanFrom=brandLineIdx>=0?brandLineIdx+1:0;
-  // Try inline label match first (e.g. "Number of Years in Operation: 56")
-  for(let i=scanFrom;i<lines.length;i++){
+  for(let i=0;i<lines.length;i++){
     const l=lines[i];
     const ym=l.match(/number of years[^:]*:\s*(\d{1,3})/i);
     const om=l.match(/number of outlets[^:]*:\s*(\d{1,2})/i);
@@ -928,7 +938,6 @@ function parseText(){
     if(om&&!d.numOutlets)d.numOutlets=om[1];
     if(d.yearsOp&&d.numOutlets)break;
   }
-  // Fallback: two consecutive standalone small integers
   if(!d.yearsOp||!d.numOutlets){
     for(let i=scanFrom;i<lines.length-1;i++){
       const a=lines[i].trim(),b=lines[i+1].trim();
