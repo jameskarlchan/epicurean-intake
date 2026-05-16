@@ -904,6 +904,7 @@ function parseText(){
   // Read it directly from the end of vals — immune to positional drift from optional fields.
   if(vals.length > 0){
     const last = vals[vals.length - 1];
+    console.log("LAST CHECK:", last, "isAddr:", isAddress(last));
     if(last && !isEmail(last) && !isPhone(last) && !isUEN(last) && !isAddress(last) && !isNum(last)){
       d.brandName = last;
       console.log("BRANDNAME SET:", d.brandName);
