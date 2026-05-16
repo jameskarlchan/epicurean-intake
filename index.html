@@ -823,7 +823,7 @@ function parseText(){
   }
 
   // STEP 2: Collect only the value lines — stop before Section 4 content
-  const STOP=/^(this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
+  const STOP=/^(ℹ️|this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
   const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|name of brand|☐|for office use|submission|reference number|payment received|processed by)/i;
   const EMOJI=/^[\s📝💰🏢💳🍽️📅📋✅💡📨📸✍️⚖️📞💬🎉🎟️🖼️ℹ️⏰☐✨⭐🌟\-–—]+$/;
 
@@ -836,6 +836,8 @@ function parseText(){
     if(l.length<=1)continue;
     vals.push(l);
   }
+  console.log("VALS:",JSON.stringify(vals));
+  console.log("LAST VAL:",vals[vals.length-1]);
 
   // STEP 3: Type helpers
   const fmtPhone=s=>{const n=s.replace(/\D/g,'');return n.length===8?n.slice(0,4)+' '+n.slice(4):s;};
