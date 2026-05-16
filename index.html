@@ -823,7 +823,7 @@ function parseText(){
   }
 
   // STEP 2: Collect only the value lines — stop before Section 4 content
-  const STOP=/^(ℹ️|this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
+  const STOP=/^(this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
   const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|name of brand|☐|for office use|submission|reference number|payment received|processed by)/i;
   const EMOJI=/^[\s📝💰🏢💳🍽️📅📋✅💡📨📸✍️⚖️📞💬🎉🎟️🖼️ℹ️⏰☐✨⭐🌟\-–—]+$/;
 
@@ -1349,7 +1349,7 @@ function getTablePricing(){
 // ══════════════════════════════════════════════════════════
 // GOOGLE SHEETS CONFIG — paste your Apps Script Web App URL here
 // ══════════════════════════════════════════════════════════
-const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyVzAUKLf9SxyDU0rL-RUEKQPQROx1yw_gUwgPVwjouPkqmygTclJDPgl-QA8Gnvy7IlA/exec';
+const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzGvLm-AGCcBFirPBWcmpf_M96-VGJoLF1XurCk51ZidXLroO5_OI9LfHn0tfYLOdSC/exec';
 
 function generateAll(){
   if(!gv('brandName')){showToast('Please enter a Brand Name.');return;}
@@ -1415,7 +1415,7 @@ function writeToSheet(){
   // Script tag injection — the only method that reliably bypasses CORS for Apps Script
   const callbackName='gsCallback_'+Date.now();
   const payload=encodeURIComponent(JSON.stringify({rows}));
-  const url=SHEET_ENDPOINT+'?payload='+payload+'&callback='+callbackName;
+  const url=SHEET_ENDPOINT+'?data='+payload+'&callback='+callbackName;
 
   window[callbackName]=function(response){
     delete window[callbackName];
