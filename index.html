@@ -824,7 +824,7 @@ function parseText(){
 
   // STEP 2: Collect only the value lines — stop before Section 4 content
   const STOP=/^(ℹ️|this name will be used|number of years|type of establishment|cuisine type|average spend|section 4|award category|casual dining|fine dining|experiential|specialised|people.s choice)/i;
-  const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|☐|for office use|submission|reference number|payment received|processed by)/i;
+  const SKIP=/^(nomination form|📝|section \d|company\/?business|company address|contact person|designation\/?title|contact number|email address|ras member|uen |unique entity|billing company|billing address|billing contact|your concept|name of brand|☐|for office use|submission|reference number|payment received|processed by)/i;
   const EMOJI=/^[\s📝💰🏢💳🍽️📅📋✅💡📨📸✍️⚖️📞💬🎉🎟️🖼️ℹ️⏰☐✨⭐🌟\-–—]+$/;
 
   const vals=[];
@@ -897,29 +897,9 @@ function parseText(){
   // Skip any remaining address lines
   while(vi<vals.length&&isAddress(peek()))skip();
 
-  // [13] Brand / concept name
-  // Anchor to "This name will be used" line — always appears right after brand name in PDF.
-  // Scan backwards from it to find the brand name, immune to missing optional fields.
-  const stopMarkerIdx = lines.findIndex(l => /this name will be used/i.test(l));
-  if(stopMarkerIdx > 0){
-    for(let i = stopMarkerIdx - 1; i >= Math.max(0, stopMarkerIdx - 5); i--){
-      const candidate = lines[i].trim();
-      if(candidate.length > 1 &&
-         !isEmail(candidate) && !isPhone(candidate) && !isUEN(candidate) &&
-         !isAddress(candidate) && !isNum(candidate) &&
-         !SKIP.test(candidate) && !STOP.test(candidate) &&
-         !/nomination form/i.test(candidate) &&
-         !/^\W+$/.test(candidate)){
-        d.brandName = candidate;
-        break;
-      }
-    }
-  }
-  // Fallback: positional
-  if(!d.brandName){
-    while(vi<vals.length&&(isNum(peek())||isAddress(peek())))skip();
-    if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek()))d.brandName=take();
-  }
+  // [13] Brand / concept name — next non-numeric, non-address line
+  while(vi<vals.length&&(isNum(peek())||isAddress(peek())))skip();
+  if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek()))d.brandName=take();
 
   // [14-15] Years in operation + Number of outlets
   // These appear on page 5 AFTER the category list — too far for positional parsing.
