@@ -843,7 +843,7 @@ function parseText(){
   const fmtPhone=s=>{const n=s.replace(/\D/g,'');return n.length===8?n.slice(0,4)+' '+n.slice(4):s;};
   const isEmail=s=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
   const isPhone=s=>/^[\+\d][\d\s\-]{6,13}$/.test(s.trim())&&s.replace(/\D/g,'').length>=7;
-  const isUEN=s=>/^\d{9}[A-Za-z]$/.test(s.trim());
+  const isUEN=s=>/^\d{8,9}[A-Za-z]$/.test(s.trim());
   const isAddress=s=>/\b(street|road|ave|avenue|drive|lane|place|crescent|way|#\d{2}|\d{6}|bencoolen|orchard|raffles|marina|jurong|tampines|bedok|novena|toa payoh|ang mo kio|clementi|bishan|yishun|woodlands|sengkang|punggol)\b/i.test(s);
   const isNum=s=>/^\d{1,3}$/.test(s.trim());
 
@@ -919,7 +919,7 @@ function parseText(){
   // [14-15] Years in operation + Number of outlets
   // These appear on page 5 AFTER the category list — too far for positional parsing.
   // Scan the full lines array for two consecutive standalone small integers.
-  const brandLineIdx=lines.findIndex(l=>d.brandName&&l.trim()===d.brandName.trim());
+  const brandLineIdx=lines.findIndex(l=>d.brandName&&l.trim().toLowerCase()===d.brandName.trim().toLowerCase());
   const scanFrom=brandLineIdx>=0?brandLineIdx+1:0;
   for(let i=scanFrom;i<lines.length-1;i++){
     const a=lines[i].trim(),b=lines[i+1].trim();
@@ -939,7 +939,7 @@ function parseText(){
   else if(!d.financeEmail&&extEmails[0])d.financeEmail=extEmails[0];
 
   // STEP 6: UEN safety net
-  const uenMatch=raw.match(/\b(\d{9}[A-Za-z])\b/);
+  const uenMatch=raw.match(/\b(\d{8,9}[A-Za-z])\b/);
   if(!d.uen&&uenMatch)d.uen=uenMatch[1];
 
   // STEP 7: Categories — ONLY from ticks. No fallback. Ticks rarely copy from PDFs.
@@ -1400,6 +1400,7 @@ function writeToSheet(){
   financeContact:gv('financeContact')||'',
   financeDesig:gv('financeDesig')||'',
   financePhone:gv('financePhone')||''
+};
     };
   });
 
