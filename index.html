@@ -898,14 +898,19 @@ function parseText(){
   while(vi<vals.length&&isAddress(peek()))skip();
 
   // [13] Brand / concept name
-  // Scan backwards from the "This name will be used" marker — brand name always
-  // appears immediately before it, immune to positional drift from optional fields.
-  const stopMarkerIdx=lines.findIndex(l=>/^(\u2139\ufe0f|this name will be used)/i.test(l.trim()));
-  if(stopMarkerIdx>0){
-    for(let i=stopMarkerIdx-1;i>=Math.max(0,stopMarkerIdx-4);i--){
-      const candidate=lines[i].trim();
-      if(candidate&&!isEmail(candidate)&&!isPhone(candidate)&&!isUEN(candidate)&&!isAddress(candidate)&&!isNum(candidate)&&!SKIP.test(candidate)&&!STOP.test(candidate)&&!/^(📝|\u2139|☐|✅|💡|🍽|🏢|💳)/i.test(candidate)&&candidate.length>1){
-        d.brandName=candidate;
+  // Anchor to "This name will be used" line — always appears right after brand name in PDF.
+  // Scan backwards from it to find the brand name, immune to missing optional fields.
+  const stopMarkerIdx = lines.findIndex(l => /this name will be used/i.test(l));
+  if(stopMarkerIdx > 0){
+    for(let i = stopMarkerIdx - 1; i >= Math.max(0, stopMarkerIdx - 5); i--){
+      const candidate = lines[i].trim();
+      if(candidate.length > 1 &&
+         !isEmail(candidate) && !isPhone(candidate) && !isUEN(candidate) &&
+         !isAddress(candidate) && !isNum(candidate) &&
+         !SKIP.test(candidate) && !STOP.test(candidate) &&
+         !/nomination form/i.test(candidate) &&
+         !/^\W+$/.test(candidate)){
+        d.brandName = candidate;
         break;
       }
     }
