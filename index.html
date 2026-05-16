@@ -836,6 +836,8 @@ function parseText(){
     if(l.length<=1)continue;
     vals.push(l);
   }
+  console.log("VALS:",JSON.stringify(vals));
+  console.log("LAST VAL:",vals[vals.length-1]);
 
   // STEP 3: Type helpers
   const fmtPhone=s=>{const n=s.replace(/\D/g,'');return n.length===8?n.slice(0,4)+' '+n.slice(4):s;};
@@ -852,47 +854,47 @@ function parseText(){
   const take=()=>vals[vi++]||'';
   const skip=()=>vi++;
 
-  // [0] Company name — first value, should not be email/phone/UEN
+  // [0] Company name
   if(!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek())&&peek())d.companyName=take();else if(peek())skip();
 
-  // [1] Contact person — should be a name (no @, not all-digits)
+  // [1] Company address — skip it, collect properly below
+  if(isAddress(peek())||(/^\d+[A-Za-z]?\s/.test(peek())&&peek().length>8))d.companyAddress=take();
+
+  // [2] Contact person
   if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek())&&!isAddress(peek()))d.contactPerson=take();
 
-  // [2] Designation
+  // [3] Designation
   if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek())&&!isAddress(peek()))d.designation=take();
 
-  // [3] Phone
+  // [4] Phone
   if(isPhone(peek()))d.contactPhone=fmtPhone(take());
 
-  // [4] Contact email
+  // [5] Contact email
   if(isEmail(peek()))d.contactEmail=take();
 
-  // [5] UEN
+  // [6] UEN
   if(isUEN(peek()))d.uen=take();
 
-  // [6] Billing company name
+  // [7] Billing company name
   if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek())&&!isAddress(peek()))d.billingName=take();
 
-  // [7] Billing contact person
+  // [8] Billing address — collect immediately after billing name
+  if(isAddress(peek())||(/^\d+[A-Za-z]?\s/.test(peek())&&peek().length>8))d.billingAddress=take();
+
+  // [9] Billing contact person
   if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek())&&!isAddress(peek()))d.financeContact=take();
 
-  // [8] Billing designation
+  // [10] Billing designation
   if(peek()&&!isEmail(peek())&&!isPhone(peek())&&!isUEN(peek())&&!isAddress(peek()))d.financeDesig=take();
 
-  // [9] Billing phone (optional — some forms include, some don't)
-  if(isPhone(peek()))d.financePhone=fmtPhone(take());
-
-  // [10] Billing email
+  // [11] Billing email (may come before or after phone)
   if(isEmail(peek()))d.financeEmail=take();
 
-  // [11-12] Address lines — grab up to 2 consecutive address lines
-  const addrs=[];
-  while(vi<vals.length&&addrs.length<2&&(isAddress(peek())||(/^\d+[A-Za-z]?\s/.test(peek())&&peek().length>8))){
-    addrs.push(take());
-  }
-  if(addrs[0])d.companyAddress=addrs[0];
-  if(addrs[1])d.billingAddress=addrs[1];
-  else if(addrs[0])d.billingAddress=addrs[0];
+  // [12] Billing phone (optional — some forms have it after email)
+  if(isPhone(peek()))d.financePhone=fmtPhone(take());
+
+  // If phone came before email in this form, grab email now
+  if(!d.financeEmail&&isEmail(peek()))d.financeEmail=take();
 
   // Skip any remaining address lines
   while(vi<vals.length&&isAddress(peek()))skip();
